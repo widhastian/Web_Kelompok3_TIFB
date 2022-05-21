@@ -6,6 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use RealRashid\SweetAlert\Facades\Alert;
+use Illuminate\Support\Facades\DB;
+// use Alert;
 
 class Petugas extends Controller
 {
@@ -18,13 +22,14 @@ class Petugas extends Controller
     {
         $petugas = User::where('id_level', '2')->orderBy('id', 'DESC')->get();
 
-        if (Auth::user()->id_level == '1') {
+        if (Auth::user()->id_level == 1) {
+            // Alert::success('Success Title', 'Success Message');
             return view('contentadmin.petugas.petugas', [
                 // key => value
                 'dataPetugas' => $petugas,
             ]);
         } else {
-            return view('contentadmin.tidakBisaAkses');
+            return view('tidakBisaAkses');
         }
     }
 
@@ -36,7 +41,21 @@ class Petugas extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|min:8',
+            'password_confirmation' => 'required_with:password|same:password|min:8',
+        ]);
+
+        User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'id_level' => 2
+        ]);
+
+        return redirect()->route('admin-petugas');
     }
 
     /**
@@ -68,9 +87,15 @@ class Petugas extends Controller
      * @param  \App\Models\Petugas  $petugas
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Petugas $petugas)
+    public function update(Request $request, $id)
     {
-        //
+        DB::table('users')->where('id', $id)->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password)
+        ]);
+        return
+            redirect()->route('admin-petugas');
     }
 
     /**
@@ -79,8 +104,10 @@ class Petugas extends Controller
      * @param  \App\Models\Petugas  $petugas
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Petugas $petugas)
+    public function destroy($id)
     {
-        //
+        DB::table('users')->where('id', $id)->delete();
+        return
+            redirect()->route('admin-petugas');
     }
 }

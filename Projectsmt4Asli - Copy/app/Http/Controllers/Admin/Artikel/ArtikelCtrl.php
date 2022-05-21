@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use illuminate\support\Str;
+use illuminate\Support\Facades\DB;
 
 class ArtikelCtrl extends Controller
 {
@@ -28,6 +29,7 @@ class ArtikelCtrl extends Controller
                 if ($t->id_user == $idUser) {
                     $dataArtPetugas[] = [
                         'id' => $t->id,
+                        'judul' => $t->judul,
                         'foto' => $t->foto,
                         'video' => $t->video,
                         'deskripsi' => $t->deskripsi,
@@ -74,6 +76,7 @@ class ArtikelCtrl extends Controller
 
         $request->validate([
             'id_kategori' => 'required',
+            'judul' => 'required',
             'foto' => 'required|image',
             'video' => 'required',
             'deskripsi' => 'required',
@@ -84,9 +87,10 @@ class ArtikelCtrl extends Controller
 
         Artikel::create([
             'id_kategori' => $request->id_kategori,
+            'judul' => $request->judul,
             'foto' => $nameImage,
-            'video' => $request->video,
-            'deskripsi' => Str::limit(strip_tags($request->deskripsi), 200, '...'),
+            'video' => strip_tags($request->video),
+            'deskripsi' => strip_tags($request->deskripsi),
             'id_user' => Auth()->id(),
         ]);
 
@@ -122,9 +126,29 @@ class ArtikelCtrl extends Controller
      * @param  \App\Models\Artikel  $artikel
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Artikel $artikel)
+    public function update(Request $request, $id)
     {
-        //
+        $request->validate([
+            'id_kategori' => 'required',
+            'judul' => 'required',
+            'foto' => 'required|image',
+            'video' => 'required',
+            'deskripsi' => 'required',
+        ]);
+
+        $nameImage = md5($request->foto . microtime() . '.' . $request->foto->extension());
+        $request->foto->move(public_path('files/artikel'), $nameImage);
+
+        Artikel::update([
+            'id_kategori' => $request->id_kategori,
+            'judul' => $request->judul,
+            'foto' => $nameImage,
+            'video' => strip_tags($request->video),
+            'deskripsi' => strip_tags($request->deskripsi),
+            'id_user' => Auth()->id(),
+        ]);
+
+        return redirect()->route('admin-artikel');
     }
 
     /**
@@ -133,8 +157,8 @@ class ArtikelCtrl extends Controller
      * @param  \App\Models\Artikel  $artikel
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Artikel $artikel)
+    public function destroy($id)
     {
-        //
+        // DB::table('artikel')->where('id', $id)->
     }
 }
